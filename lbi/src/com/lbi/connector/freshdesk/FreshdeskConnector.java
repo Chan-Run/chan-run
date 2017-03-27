@@ -25,6 +25,7 @@ import org.w3c.dom.NamedNodeMap;
 
 import com.lbi.connector.Connector;
 import com.lbi.connector.ConnectorConstants;
+import com.lbi.connector.ConnectorUtil;
 import com.lbi.connector.ConnectorXMLConstants;
 import com.lbi.connector.ModuleInfo;
 import com.lbi.framework.app.Request;
@@ -93,34 +94,54 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 				for(int i = 0; i < arr.length(); i++)
 				{
 					count++;
+					
 					if(count == 200000)
 					{
 						count = 0;
 						file = new File(modDir + File.separator + System.currentTimeMillis() + new Random().nextInt() + ".csv");
 					}
+					
 					obj = arr.getJSONObject(i);
-					writeModData(csvPrinter, req, modInfo, mode);
+					String userId = req.getUserId().toString();
+					Long connId = dbInfo.getConnectorId();
+					csvPrinter.print(userId);
+					csvPrinter.print(connId);
+					writeModData(modInfo, csvPrinter);
 				}
-				handleConnection(modInfo, mode, req, response, bw, csvPrinter);
-			}
-			else if(respCode == 429)
-			{
-				Header[] retryAfter = response.getHeaders("Retry-After");
-				int wait = Integer.parseInt(retryAfter[0].getValue());
-				Thread.sleep(wait);
-				downloadModData(modInfo, mode, req);
+				
+				if(response.containsHeader("link"))
+				{
+					Header[] link = response.getHeaders("link");
+					nextPage = link[0].getValue();
+					url = nextPage.replace('<', ' ').replace(">; rel=\"next\"", "").trim();
+					downloadModData(modInfo, mode, req);
+				}
+				else
+				{
+					try
+					{
+						url="";
+						colHeader = 0;
+						ConnectorUtil.closeWriter(bw);
+						csvPrinter.close(); 
+					}
+					catch(IOException e)
+					{ 
+						throw new Exception("IOException occurred while writing data");
+					}
+				}
 			}
 			else
 			{
-				throw new Exception(respLine);
+				handleResponse(modInfo, mode, req, response);
 			}
 		}
 		finally
 		{
 			try
 			{ 
-				bw.close();
-				csvPrinter.close(); 
+				ConnectorUtil.closeWriter(bw);
+				csvPrinter.close();
 			} 
 			catch(IOException e) 
 			{ 
@@ -128,92 +149,11 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 			}
 		}		
 	}
-	
-	private void handleConnection(ModuleInfo modInfo, int mode, Request req, CloseableHttpResponse response, BufferedWriter bw, CSVPrinter csvPrinter) throws Exception
-	{
 
-		if(response.containsHeader("link"))
-		{
-			Header[] link = response.getHeaders("link");
-			nextPage = link[0].getValue();
-		}
-		else
-		{
-			nextPage = "";
-		}
-		
-		if(nextPage.equals(""))
-		{
-			try
-			{
-				url="";
-				colHeader = 0;
-				bw.close();
-				csvPrinter.close(); 
-			}
-			catch(IOException e) 
-			{ 
-				throw new Exception("IOException occurred while writing data");
-			}
-		}
-		else
-		{
-			url = nextPage.replace('<', ' ').replace(">; rel=\"next\"", "").trim();
-			downloadModData(modInfo, mode, req);
-		}
-		
-	}
-
-	private void handleUrl(ModuleInfo modInfo, int mode)
+	private void writeModData(ModuleInfo modInfo, CSVPrinter csvPrinter) throws Exception
 	{
-		
-		if(url.equals("") && modName.equals("tickets"))
-		{
-			baseUrl = dbInfo.getBaseUrl();
-			url = modInfo.getModAttrValue(MODULE_URL);
-			
-			if(mode == INIT_MODE)
-			{
-				url = "https://"+baseUrl+url+"?per_page=100&include=stats&updated_since=2010-10-10";
-			}
-			else
-			{
-				String time = dbInfo.getLastFetchTime().toString();
-				url = "https://"+baseUrl+url+"?per_page=100&include=stats&updated_since="+time;
-			}
-		}
-		else if(url.equals(""))
-		{
-			baseUrl = dbInfo.getBaseUrl();
-			url = modInfo.getModAttrValue(MODULE_URL);
-			url = "https://"+baseUrl+url+"?per_page=100";
-		}
-		
-	}
-
-	private void createColHeader(CSVPrinter csvPrinter, ModuleInfo modInfo) throws Exception
-	{
-		if(colHeader == 0)
-		{
-			colHeader = 1;
-			csvPrinter.print("USER_ID");
-			csvPrinter.print("CONNECTOR_ID");
-			Iterator<NamedNodeMap> it = modInfo.getAllFields().values().iterator();
-			while(it.hasNext())
-			{
-				csvPrinter.print(it.next().getNamedItem("name").getNodeValue());
-			}
-			csvPrinter.println();
-		}
-	}
-	
-	private void writeModData(CSVPrinter csvPrinter, Request req, ModuleInfo modInfo, int mode) throws Exception
-	{
-		String userId = req.getUserId().toString();
-		Long connId = dbInfo.getConnectorId();
-		csvPrinter.print(userId);
-		csvPrinter.print(connId);
 		Iterator<String> it = modInfo.getAllFields().keySet().iterator();
+		
 		if(modName.equals("agents"))
 		{
 			obj1 = obj.getJSONObject("contact");
@@ -222,7 +162,7 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 				field = it.next();
 				if(field.equals("ticket_scope"))
 				{
-					csvPrinter.print(scope.get(Integer.valueOf(obj.getInt(field))));
+					csvPrinter.print(SCOPE.get(obj.get(field)));
 				}
 				else if(obj.has(field))
 				{
@@ -237,92 +177,6 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 		}
 		else
 		{
-			if(modName.equals("sla_policies") && obj.getJSONObject("applicable_to").length() != 0)
-			{
-				obj1 = obj.getJSONObject("applicable_to");
-				File dir = new File(CONNECTOR_DIR + File.separator + connId + "_" + mode + File.separator + "sla_info" + File.separator);
-				if(!dir.isDirectory())
-				{
-					dir.mkdir();
-				}
-				File f = new File(dir + File.separator + System.currentTimeMillis() + new Random().nextInt() + ".csv");
-				BufferedWriter buf = new BufferedWriter(new FileWriter(f));
-				CSVPrinter csv = new CSVPrinter(buf, CSVFormat.DEFAULT);
-				csv.print("SLA_ID");
-				csv.print("GROUP_IDS");
-				csv.print("COMPANY_IDS");
-				csv.println();
-				
-				if(obj1.has("group_ids") && obj1.has("company_ids"))
-				{
-					arr1 = obj1.getJSONArray("group_ids");
-					arr2 = obj1.getJSONArray("company_ids");
-					
-					if(arr1.length()>=arr2.length())
-					{
-						for(int i = 0; i<arr1.length(); i++)
-						{
-							csv.print(obj.getString("id"));
-							csv.print(arr1.getString(i));
-							if(i<arr2.length())
-							{
-								csv.print(arr2.getString(i));
-							}
-							else
-							{
-								csv.print("");
-							}
-						}
-					}
-					else
-					{
-						for(int i = 0; i<arr2.length(); i++)
-						{
-							csv.print(obj.getString("id"));
-							if(i<arr1.length())
-							{
-								csv.print(arr1.getString(i));
-							}
-							else
-							{
-								csv.print("");
-							}
-							csv.print(arr2.getString(i));
-						}
-					}
-				}
-				else if(obj1.has("group_ids") && !obj1.has("company_ids"))
-				{
-					arr1 = obj1.getJSONArray("group_ids");
-					
-					for(int i = 0; i<arr1.length(); i++)
-					{
-						csv.print(obj.getString("id"));
-						csv.print(arr1.getString(i));
-						csv.print("");
-					}
-				}
-				else if(!obj1.has("group_ids") && obj1.has("company_ids"))
-				{
-					arr1 = obj1.getJSONArray("company_ids");
-					
-					for(int i = 0; i<arr1.length(); i++)
-					{
-						csv.print(obj.getString("id"));
-						csv.print("");
-						csv.print(arr1.getString(i));
-					}
-				}
-				try
-				{
-					buf.close();
-					csv.close();
-				}
-				catch(IOException e) 
-				{ 
-					throw new Exception("IOException occurred while writing data");
-				}
-			}
 			while(it.hasNext())
 			{
 				field = it.next();
@@ -333,17 +187,17 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 					{
 						case "source" : 
 							
-							csvPrinter.print(source.get(Integer.valueOf(obj.getInt(field))));
+							csvPrinter.print(SOURCE.get(obj.get(field)));
 							break;
 							
 						case "status" :
 							
-							csvPrinter.print(status.get(Integer.valueOf(obj.getInt(field))));
+							csvPrinter.print(STATUS.get(obj.get(field)));
 							break;
 							
 						case "priority" :
 							
-							csvPrinter.print(priority.get(Integer.valueOf(obj.getInt(field))));
+							csvPrinter.print(PRIORITY.get(obj.get(field)));
 							break;
 					}
 				}
@@ -352,8 +206,72 @@ public class FreshdeskConnector extends Connector implements GeneralConstants, F
 					csvPrinter.print(obj.getString(field));
 				}
 			}
+			csvPrinter.println();
 		}
-		csvPrinter.println();
+	}
+
+	private void handleResponse(ModuleInfo modInfo, int mode, Request req, CloseableHttpResponse response) throws Exception
+	{
+		if(respCode == 429)
+		{
+			if(response.containsHeader("Retry-After"))
+			{
+				Header[] retryAfter = response.getHeaders("Retry-After");
+				int wait = Integer.parseInt(retryAfter[0].getValue())*1000;
+				Thread.sleep(wait);
+			}
+			else
+			{
+				Thread.sleep(3600000);
+			}
+			downloadModData(modInfo, mode, req);
+		}
+		else
+		{
+			throw new Exception(respLine);
+		}
+	}
+
+	private void handleUrl(ModuleInfo modInfo, int mode)
+	{
+		baseUrl = dbInfo.getBaseUrl();
+		
+		if(url.equals("") && modName.equals("tickets"))
+		{
+			url = modInfo.getModAttrValue(MODULE_URL);
+			
+			if(mode == INIT_MODE)
+			{
+				url = "https://"+baseUrl+url+"2001-01-01";
+			}
+			else
+			{
+				String time = dbInfo.getLastFetchTime().toInstant().toString();
+				url = "https://"+baseUrl+url+time;
+			}
+		}
+		else if(url.equals(""))
+		{
+				url = modInfo.getModAttrValue(MODULE_URL);
+				url = "https://"+baseUrl+url;
+		}
+		
+	}
+
+	private void createColHeader(CSVPrinter csvPrinter, ModuleInfo modInfo) throws Exception
+	{
+		if(colHeader == 0)
+		{
+			colHeader ++;
+			csvPrinter.print("USER_ID");
+			csvPrinter.print("CONNECTOR_ID");
+			Iterator<NamedNodeMap> it = modInfo.getAllFields().values().iterator();
+			while(it.hasNext())
+			{
+				csvPrinter.print(it.next().getNamedItem("name").getNodeValue());
+			}
+			csvPrinter.println();
+		}
 	}
 
 	@Override

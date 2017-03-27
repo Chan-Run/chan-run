@@ -33,7 +33,7 @@ public class FreshdeskGenInfo extends ConnectorGenInfo
 
 	public String getConnectorKey()
 	{
-		return "freshdesk";
+		return "Freshdesk";
 	}
 
 	public String getConnDBInfoQuery()

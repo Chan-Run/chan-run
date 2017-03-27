@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.Random;
@@ -24,6 +25,7 @@ import org.w3c.dom.NamedNodeMap;
 
 import com.lbi.connector.Connector;
 import com.lbi.connector.ConnectorConstants;
+import com.lbi.connector.ConnectorUtil;
 import com.lbi.connector.ConnectorXMLConstants;
 import com.lbi.connector.ModuleInfo;
 import com.lbi.framework.app.Request;
@@ -37,6 +39,7 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 	{
 		super(TEAMSUPPORT_CONN_ID);
 	}
+	
 	public TeamsupportConnector(Long connectorId) throws Exception
 	{
 		super(TEAMSUPPORT_CONN_ID);
@@ -46,8 +49,9 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 	int respCode = 0;
 	int colHeader = 0;
 	String url = "";
+	String baseUrl = "";
 	String field = "";
-	String orgId="";
+	long orgId = 0l;
 	String modName = "";
 	String respLine = "";
 	JSONObject json, obj,obj1,obj2;
@@ -72,7 +76,7 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 			client  = HttpClients.createDefault();
 			get = new HttpGet();
 			get.setURI(new URI(url));
-			get.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(orgId.getBytes()) + Base64.getEncoder().encodeToString(":".getBytes()) + Base64.getEncoder().encodeToString(authInfo.getToken().getBytes()));
+			get.addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(String.valueOf(orgId).getBytes()) + Base64.getEncoder().encodeToString(":".getBytes()) + Base64.getEncoder().encodeToString(authInfo.getToken().getBytes()));
 			response = client.execute(get);
 			respCode = response.getStatusLine().getStatusCode();
 			if(respCode == 200)
@@ -97,13 +101,17 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 						file = new File(modDir + File.separator + System.currentTimeMillis() + new Random().nextInt() + ".csv");
 					}
 					obj = arr.getJSONObject(i);
-					writeModData(bw, csvPrinter, req , modInfo, mode);
+					String userId = req.getUserId().toString();
+					Long connId = dbInfo.getConnectorId();
+					csvPrinter.print(userId);
+					csvPrinter.print(connId);
+					writeModData(modInfo, csvPrinter);
 				}
 				try
 				{
 					url="";
 					colHeader = 0;
-					bw.close();
+					ConnectorUtil.closeWriter(bw);
 					csvPrinter.close(); 
 				}
 				catch(IOException e) 
@@ -113,15 +121,15 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 			}
 			else
 			{
-				throw new Exception(respLine);
+				handleResponse(modInfo, mode, req, response);
 			}
 		}
 		
 		finally
 		{
 			try
-			{ 
-				bw.close();
+			{
+				ConnectorUtil.closeWriter(bw);
 				csvPrinter.close(); 
 			} 
 			catch(IOException e) 
@@ -131,9 +139,50 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 		}		
 	}
 
-	private void handleUrl(ModuleInfo modInfo, int mode)
+	private void writeModData(ModuleInfo modInfo, CSVPrinter csvPrinter) throws Exception
 	{
-		String baseUrl = dbInfo.getBaseUrl();
+		Iterator<String> it = modInfo.getAllFields().keySet().iterator();
+		
+		while(it.hasNext())
+		{
+			field = it.next();
+			
+			if(field.equals("Name") && !obj.has("Name"))
+			{
+				String fName = getName("FirstName");
+				String mName = getName("MiddleName");
+				String lName = getName("LastName");
+				String name = (fName.equals("null") ? "" : fName)  + (mName.equals("null") ? "" : mName) + (lName.equals("null") ? "" : lName);
+				csvPrinter.print(name);
+			}
+			else if(obj.isNull(field))
+			{
+				csvPrinter.print("");
+			}
+			else
+			{
+				csvPrinter.print(obj.getString(field));
+			}
+		}
+		csvPrinter.println();
+	}
+
+	private void handleResponse(ModuleInfo modInfo, int mode, Request req, CloseableHttpResponse response) throws Exception
+	{
+		if(respCode == 429)
+		{
+			Thread.sleep(3600000);
+			downloadModData(modInfo, mode, req);
+		}
+		else
+		{
+			throw new Exception(respLine);
+		}
+	}
+
+	private void handleUrl(ModuleInfo modInfo, int mode) throws Exception
+	{
+		baseUrl = dbInfo.getBaseUrl();
 		
 		if(url.equals(""))
 		{
@@ -141,12 +190,13 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 			
 			if(mode == INIT_MODE)
 			{
-				url = "https://"+baseUrl+url+"?DateModified=20101010000000";
+				url = "https://"+baseUrl+url+"20010101000000";
 			}
 			else
 			{
-				String time = dbInfo.getLastFetchTime().toString();
-				url = "https://"+baseUrl+url+"?DateModified="+time;
+			    SimpleDateFormat d = new SimpleDateFormat("yyyyMMddHHmmss");
+			    String time = d.format(dbInfo.getLastFetchTime().clone());
+				url = "https://"+baseUrl+url+time;
 			}
 		}
 		
@@ -168,79 +218,9 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 		}
 	}
 	
-	private void writeModData(BufferedWriter bw, CSVPrinter csvPrinter,Request req, ModuleInfo modInfo, int mode) throws Exception
+	private String getName(String name) throws Exception
 	{
-		String userId = req.getUserId().toString();
-		Long connId = dbInfo.getConnectorId();
-		csvPrinter.print(userId);
-		csvPrinter.print(connId);
-		Iterator<String> it = modInfo.getAllFields().keySet().iterator();
-		if(modName.equals("tickets") && obj.getJSONObject("Tags") != null)
-		{
-			obj1 = obj.getJSONObject("Tags");
-			arr1 = obj1.getJSONArray("Tag");
-			
-			File dir = new File(CONNECTOR_DIR + File.separator + connId + "_" + mode + File.separator + "tag_info" + File.separator);
-			if(!dir.isDirectory())
-			{
-				dir.mkdir();
-			}
-			File f = new File(dir + File.separator + System.currentTimeMillis() + new Random().nextInt() + ".csv");
-			BufferedWriter buf = new BufferedWriter(new FileWriter(f));
-			CSVPrinter csv = new CSVPrinter(buf, CSVFormat.DEFAULT);
-			csv.print("TICKET_ID");
-			csv.print("TAG_ID");
-			csv.print("TAG_NAME");
-			csv.println();
-			for(int i = 0; i < arr1.length(); i++)
-			{
-				csv.print(obj.getString("id"));
-				csv.print(generateTagId());
-				csv.print(arr1.getJSONObject(i).getString("Value"));
-			}
-			try
-			{
-				buf.close();
-				csv.close();
-			}
-			catch(IOException e) 
-			{ 
-				throw new Exception("IOException occurred while writing data");
-			}	
-		}
-		while(it.hasNext())
-		{
-			field = it.next();
-			
-			if(field.equals("Name") && !obj.has("Name"))
-			{
-				String fName = getName("FirstName");
-				String mName = getName("MiddleName");
-				String lName = getName("LastName");
-				String name = (fName == null ? "" : fName)  + (mName == null ? "" : mName) + (lName == null ? "" : lName);
-				csvPrinter.print(name);
-			}
-			else if(obj.getString(field) != null)
-			{
-				csvPrinter.print(obj.getString(field));
-			}
-			else
-			{
-				csvPrinter.print("");
-			}
-		}
-		csvPrinter.println();
-	}
-
-	private String generateTagId()
-	{
-		
-		return null;
-	}
-	
-	private String getName(String Name) throws Exception
-	{
-			return obj.getString(Name);
+			return obj.getString(name);
 	}
 	
 	@Override
@@ -253,7 +233,7 @@ public class TeamsupportConnector extends Connector implements GeneralConstants,
 	@Override
 	public void insAdditionalInfo(Request req) throws Exception
 	{
-		orgId = req.getParam("ORGID", true);
+		orgId = req.getLongParam("ORGID", true);
 		String sql = SQLQueryAPI.getSQLString("InsTeamsupportAddInfo", new Object[][]{{"CONNECTORID", dbInfo.getConnectorId()},{"ORGID", orgId}});
 		SQLQueryAPI.executeUpdate(sql);
 	}
