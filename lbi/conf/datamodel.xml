@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<tables>
+
+	<table name="Projects" desc="">
+	
+		<column name="Id" datatype="long" desc="Unique Id"></column>
+		<column name="Name" datatype="String" desc="Display name given by user"></column>
+		<column name="Created Time" datatype="Date" desc="Time of Project creation"></column>
+		<column name="Updated Time" datatype="Date" desc="Time of latest Project updation"></column>
+		<column name="OwnerId" datatype="Long" desc="User who created the project"></column>
+		<column name="Status" datatype="Integer" desc="Active or Inactive status"></column>
+		
+		<pkcolumn name="Id"></pkcolumn>
+	
+	</table>
+	
+<!-- 	<table name="ModulesMetaData" desc="Metadata of modules"> -->
+		
+<!-- 		<column name="Module Id" datatype="Long" desc="Module Id"></column> -->
+<!-- 		<column name="ModuleMetaName" datatype="String" desc="Physical name of the module"></column> -->
+		
+<!-- 		<fkcolumn name="Module Id" reftable="Modules" refcol="Id"></fkcolumn> -->
+	
+<!-- 	</table> -->
+	
+<!-- 	<table name="FieldsMetaData" desc="Metadata of fields"> -->
+	
+<!-- 		<column name="Field Id" datatype="Long" desc="Field Id"></column> -->
+<!-- 		<column name="FieldMetaName" datatype="String" desc="Physical name of the field"></column> -->
+		
+<!-- 		<fkcolumn name="Field Id" reftable="Fields" refcol="Id"></fkcolumn> -->
+<!-- 	</table> -->
+	
+	<table name="Reports" desc="Reports">
+	
+		<column name="Id" datatype="Long" desc="Unique Id"></column>
+		<column name="Name" datatype="String" desc="Display Name of the reports"></column>
+		<column name="Type" datatype="Integer" desc="Type of the reports like chart, pivot"></column>
+		<column name="Created Time" datatype="Date" desc="Created time of the report"></column>
+		<column name="Modified Time" datatype="Date" desc="Latest of modification"></column>
+		<pkcolumn name="Id"></pkcolumn>
+		
+	</table>
+	
+	<table name="ReportsFields" desc="List of involved Fields in a report">
+		
+		<column name="Id" datatype="Long" desc="Unique Id"></column>
+		<column name="Report Id" datatype="Long" desc="Id of the report which this field involved"></column>
+		<column name="Expression Id" datatype="Long" desc="Id of the expression if it is a expression column"></column>
+		<column name="Axis" datatype="Integer" desc="Axis of the field in report"></column>
+		
+		<pkcolumn name="Id"></pkcolumn>
+		<fkcolumn name="Report Id" reftable="Reports" refcol="Id"></fkcolumn>
+		<fkcolumn name="Expression Id" reftable="Reports" refcol="Id"></fkcolumn>
+		
+	</table>
+	
+	<table name="Expressions" desc="Details of expressions wirtten by the user over fields">
+	
+		<column name="Id" datatype="Long" desc="Unique Id"></column>
+		<column name="Expression" datatype="String" desc="Expression written by user over the field"></column>
+		<column name="Name" datatype="String" desc="Display name "></column>
+		<column name="Status" datatype="Integer" desc="Active or inactive"></column>
+		
+		<pkcolumn name="Id"></pkcolumn>
+		
+	</table>
+	
+	<table name="ExpressionFields" desc="List of involved fields in a expression">
+		<column name="Expression Id" datatype="Long" desc="Id of the fomula"></column>
+		<column name="Field Id" datatype="Long" desc="Id of the field"></column>
+		
+		<fkcolumn name="Expression Id" reftable="Expressions" refcol="Id"></fkcolumn>
+		<fkcolumn name="Field Id" reftable="Fields" refcol="Id"></fkcolumn>
+		
+	</table>
+	
+	<!-- **********************  Tables of Connector  ********************** -->
+	
+	<table name="Connector" desc="Details of Connectors configured by users">
+	
+		<column name="ConnectorId" datatype="Long" desc="Unique Id"></column>
+		<column name="Name" datatype="String" desc="Display Name"></column>
+		<column name="Connector" datatype="Integer" desc="Id of the connector like Insightly or Wrike"></column>
+		<column name="Project Id" datatype="Long" desc="Project Id in which the connector belongs to"></column>
+		<column name="Created Time" datatype="Date" desc="Connector configured time"></column>
+		<column name="Last Sync Time" datatype="Date" desc="Time of Last sync "></column>
+		<column name="Status" datatype="Integer" desc="Connector Sync status"></column>
+		<column name="Created By" datatype="Long" desc="Created user id"></column>
+		<column name="Schedule Time" datatype="String" desc="Sync Schedule time"></column>
+		<column name="Org Name" datatype="String" desc="Name of the org or profile or client configured"></column>
+		<column name="Email" datatype="String" desc="Email used to fetch the org"></column>
+		
+		<pkcolumn name="ConnectorId"></pkcolumn>
+		<fkcolumn name="Project Id" reftable="Projects" refcol="ProjId"></fkcolumn>
+		
+	</table>
+	
+	<table name="Modules" desc="List of tables for a particular connector">
+	
+		<column name="ModuleId" datatype="Long" desc="Unique Id"></column>
+		<column name="Name" datatype="String" desc="Display Name"></column>
+		<column name="ModMetaName" datatype="String" desc="Module Identifier"></column>
+		<column name="Connector Id" datatype="Long" desc="Id of the Connector to which this module belongs to"></column>
+		<column name="Status" datatype="Integer" desc="Status of the module like last sync failure, not in sync"></column>
+		<column name="Last Sync Time" datatype="Date" desc="Time of last data sync"></column>
+		
+		<pkcolumn name="ModuleId"></pkcolumn>
+		<fkcolumn name="Connector Id" reftable="Connector" refcol="`ConnectorId"></fkcolumn>
+	
+	</table>
+	
+	<table name="Fields" desc="List of fields for a Module">
+	
+		<column name="FieldId" datatype="Long" desc="Unique Id"></column>
+		<column name="Name" datatype="String" desc="Display Name"></column>
+		<column name="FieldMetaName" datatype="String" desc="Field Meta name"></column>
+		<column name="Datatype" datatype="Integer" desc="Datatype of the field"></column>
+		<column name="Max Size" datatype="Integer" desc="Maximum value size of that field"></column>
+		<column name="Module Id" datatype="Long" desc="Id of the module to which this field belongs to"></column>
+		
+		<pkcolumn name="FieldId"></pkcolumn>
+		<fkcolumn name="Module Id" reftable="Modules" refcol="ModuleId"></fkcolumn>
+	
+	</table>
+	
+	<table name="ConnectorSelModules" desc="Selected Modules of connector">
+
+		<column name="ConnectorSelModuleId" datatype="Long" desc="Unique Id"></column>
+		<column name="ConnectorId" datatype="Long" desc="Id of Connector to which this module belongs to"></column>
+		<column name="ModId" datatype="String" desc="Module Identifier"></column>
+		
+		<pkcolumn name="ConnectorSelModuleId"></pkcolumn>
+		<fkcolumn name="ConnectorId" reftable="Connector" refcol="ConnectorId"></fkcolumn>
+	
+	</table>
+	
+	<table name="ConnectorSelFields" desc="Selected Modules of connector">
+
+		<column name="ConnectorSelFieldId" datatype="Long" desc="Unique Id"></column>
+		<column name="ConnectorSelModId" datatype="Long" desc="Id of ConnectorSelModule to which this field belongs to"></column>
+		<column name="FieldId" datatype="String" desc="Field Identifier"></column>
+		
+		<pkcolumn name="ConnectorSelFieldId"></pkcolumn>
+		<fkcolumn name="ConnectorSelModuleId" reftable="ConnectorSelModules" refcol="ConnectorSelModuleId"></fkcolumn>
+	
+	</table>
+			
+	
+
+<!-- ===============================================================   -->
+
+<!--
+<table name="" desc="">
+<column name="" datatype="" desc="Unique Id"></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+<column name="" datatype="" desc=""></column>
+
+<pkcolumn name=""></pkcolumn>
+<fkcolumn name="" reftable="" refcol=""></fkcolumn>
+
+</table>
+
+-->
+
+
+
+
+</tables>
+
+

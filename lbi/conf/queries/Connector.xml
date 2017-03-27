@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+	<query name="InsConnDBInfo">
+		<![CDATA[
+			insert into ConnectorDBInfo (CONNDBINFOID, PROJID, STATUS, LASTFETCHTIME, PROFILENAME, SCHTIME) values (${CONNDBINFOID:LONG}, ${PROFILEID:LONG}, ${STATUS:INT}, '${LASTFETCHTIME:TIMESTAMP}', '${PROFILENAME:STRING}')
+		]]>
+	</query>
+	
+	<query name="InsConnModuleInfo">
+		<![CDATA[
+			insert into ConnectorModuleInfo (CONNMODULEINFOID, CONNDBINFOID, MODID, STATUS, LASTFETCHTIME, FETCHEDUPTO) values (${CONNMODULEINFOID:LONG}, ${CONNDBINFOID:LONG}, '${MODID:STRING}', ${STATUS:INT}, '${LASTFETCHTIME:TIMESTAMP}', '${FETCHEDUPT:TIMESTAMP}'})
+		]]>
+	</query>
+	
+</queries>

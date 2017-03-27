@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<connectors>
+	
+	<insightly>
+		<modules>
+			<module name="Contacts" url="https://api.insight.ly/v2.2/Contacts?brief=false&amp;count_total=true" perpage="500">
+				<fields>
+					<field displayname="" default="true" type="dim"></field>
+				</fields>
+			</module>
+			<module id="" displayname="" url="">
+				<fields>
+					<field>
+					</field>
+				</fields>
+			</module>
+			<module id="" displayname="" url="">
+				<fields>
+					<field>
+					</field>
+				</fields>
+			</module>
+			<module id="" displayname="" url="">
+				<fields>
+					<field>
+					</field>
+				</fields>
+			</module>
+		</modules>
+	</insightly>
+	
+	<capsulecrm>
+		<modules>
+			<module name="Contacts" displayname="Contacts" url="https://api.capsulecrm.com/api/v2/parties?embed=organisation,fields&amp;per_page=100" deleteurl="https://api.capsulecrm.com/api/v2/parties/deleted" responsename="parties">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="First Name" metaname="First Name" datatype="String" default="true" type="dim">firstName</field>
+					<field displayname="Last Name" metaname="Last Name" datatype="String" default="true" type="dim">lastName</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim">emailAddresses</field>
+				</fields>
+			</module>
+			<module  id="Organisations" displayname="Organisations"  url="">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim">name</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim">emailAddresses</field>
+					<field displayname="Website" metaname="Website" datatype="String" default="true" type="dim">websites</field>
+				</fields>
+			</module>
+			<module id="Opportunities" displayname="Opportunities" url="https://api.capsulecrm.com/api/v2/opportunities?embed=fields,party,milestone&amp;per_page=100" deleteurl="https://api.capsulecrm.com/api/v2/opportunities/deleted" responsename="opportunities">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim">name</field>
+					<field displayname="Created Date" metaname="Created Date"  datatype="Date" default="true" type="dim">createdAt</field>
+					<field displayname="Last Updated Date" metaname="Last Updated Date" datatype="Date" default="true" type="dim">updatedAt</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim">owner</field>
+					<field displayname="Owner" metaname="Owner" datatype="String" default="true" type="dim">owner</field>
+					<field displayname="Milestone" metaname="Stage" datatype="String" default="true" type="dim">milestone</field>
+					<field displayname="Value" metaname="Value" datatype="Currency" default="true" type="met">value</field>
+					<field displayname="Exp. Closing Date" metaname="Exp. Closing Date" datatype="Date" default="true" type="dim">expectedCloseOn</field>
+					<field displayname="Probability" metaname="Probability" datatype="Long" default="true" type="met">probability</field>
+					<field displayname="Act. Closing Date" metaname="Closed Date" datatype="Date" default="true" type="dim">closedOn</field>
+					<field displayname="Duration Basis" metaname="Duration Basis" datatype="String" default="true" type="dim">durationBasis</field>
+					<field displayname="Duration" metaname="Duration" datatype="String" default="true" type="dim">duration</field>
+					<field displayname="Contact Id" metaname="Contact Id" datatype="Long" default="true" type="dim">party</field>
+					<field displayname="Contact Name" metaname="Contacts Name" datatype="String" default="true" type="dim">party</field>
+					<field displayname="Org Id" metaname="Org Id" datatype="Long" default="true" type="dim">party</field>
+					<field displayname="Org Name" metaname="Org Name" datatype="String" default="true" type="dim">party</field>
+					
+				</fields>
+			</module>
+			<module id="Users" displayname="Users" url="https://api.capsulecrm.com/api/v2/users?embed=party" responsename="users">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim">name</field>
+				</fields>
+			</module>
+		</modules>
+	</capsulecrm>
+	
+	<hubspot>
+		<modules>
+			<module id="Contacts" displayname="Contacts" url="https://api.hubapi.com/contacts/v1/lists/all/contacts/all?count=100" responsename="contacts" property="property" offset="vid-offset" hasmore="has-more">
+				<fields>
+					<field displayname="Primary Contact Id" metaname="Id" datatype="Long" default="true" type="dim" isproperty="false">canonical-vid</field>
+					<field displayname="Portal Id" metaname="Portal Id" datatype="Long" default="true" type="dim" isproperty="false">portal-id</field>
+					<field displayname="First Name" metaname="First Name" datatype="String" default="true" type="dim" isproperty="true">firstname</field>
+					<field displayname="Last Name" metaname="Last Name" datatype="String" default="true" type="dim" isproperty="true">lastname</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim" isproperty="true">email</field>
+					<field displayname="Company" metaname="Company" datatype="String" default="true" type="dim" isproperty="true">company</field>
+				</fields>				
+			</module>
+			
+			<module id="Organisations" displayname="Companies"  url="https://api.hubapi.com/companies/v2/companies/paged/?limit=250" responsename="companies" property="properties" offset="offset" hasmore="has-more">
+				<fields> 
+					<field displayname="Portal Id" metaname="Portal Id" datatype="Long" default="true" type="dim" isproperty="false">portalId</field>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim" isproperty="false">companyId</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim"  >name</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim" isproperty="true">hubspt_owner_id</field>
+				</fields>
+			</module>
+			
+			<module id="Users" displayname="Owners" url="https://api.hubapi.com/owners/v2/owners/includeInactive=true">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">ownerId</field>
+					<field displayname="First Name" metaname="First Name" datatype="String" default="true" type="dim">firstName</field>
+					<field displayname="Last Name" metaname="Last Name" datatype="String" default="true" type="dim">lastName</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim">email</field>
+					<field displayname="Portal Id" metaname="Portal Id" datatype="Long" default="true" type="dim">portalId</field>
+				</fields>
+			</module>
+			
+			<module id="Opportunities" displayname="Deals" url="https://api.hubapi.com/deals/v1/deal/paged?limit=250&amp;includeAssociations=true" syncurl="https://api.hubapi.com/deals/v1/deal/recent/modified?limit=250&amp;includeAssociations=true" responsename="opportunities" property="properties" offset="offset" hasmore="hasMore">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim" isproperty="false" >dealId</field>
+					<field displayname="Portal Id" metaname="Portal Id" datatype="Long" default="true" type="dim" isproperty="false">portalId</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim" isproperty="true">dealname</field>
+					<field displayname="Created Date" metaname="Created Date"  datatype="Date" default="true" type="dim" isproperty="true">createdate</field>
+					<field displayname="Last Modified Date" metaname="Last Updated Date" datatype="Date" default="true" type="dim" isproperty="true">hs_lastmodifieddate</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim" isproperty="true">hubspot_owner_id</field>
+					<field displayname="Stage" metaname="Stage" datatype="String" default="true" type="dim" isproperty="true">dealstage</field>
+					<field displayname="Amount" metaname="Value" datatype="Currency" default="true" type="met" isproperty="true">amount</field>
+					<field displayname="Closed Date" metaname="Closed Date" datatype="Date" default="true" type="dim" isproperty="true">closedate</field>
+<!-- 					<field displayname="Contact Id" metaname="Contact Id" datatype="Long" default="true" type="dim">Contact Id</field> -->
+<!-- 					<field displayname="Comapny Id" metaname="Org Id" datatype="Long" default="true" type="dim">Company Id</field> -->
+				</fields>
+			</module>
+			
+		</modules>
+	</hubspot>
+	
+	<pipedrive>
+		<modules>
+			<module id="Contacts" displayname="Persons" url="https://COMPANY.pipedrive.com/v1/?limit=500" responsename="data" offset="start" hasmore="'more_items_in_collection">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim" isproperty="false">id</field>
+					<field displayname="First Name" metaname="First Name" datatype="String" default="true" type="dim" isproperty="true">firstname</field>
+					<field displayname="Last Name" metaname="Last Name" datatype="String" default="true" type="dim" isproperty="true">lastname</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim" isproperty="true" object="true" fields="value">email</field>
+					<field displayname="Org Id" metaname="Company" datatype="String" default="true" type="dim" isproperty="true" object="true" fields="value">org-id</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim" isproperty="true" object="true" fields="value">owner_id</field>
+				</fields>
+			</module>
+			
+			<module id="Organisations" displayname="Organizations"  url="https://COMPANY.pipedrive.com/v1/organizations?limit=500" responsename="data" offset="start" hasmore="'more_items_in_collection">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim" isproperty="false">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim">name</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim" isproperty="true" object="true" fields="value">owner_id</field>
+				</fields>
+			</module>
+			
+			<module id="Users" displayname="Users" url="https://COMPANY.pipedrive.com/v1/users?limit=500" responsename="data" offset="start" hasmore="'more_items_in_collection">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true" type="dim">name</field>
+					<field displayname="Email" metaname="Email" datatype="String" default="true" type="dim">email</field>
+				</fields>
+			</module>
+			
+			<module id="Opportunities" displayname="Deals" url="https://COMPANY.pipedrive.com/v1/deals/?limit=500" responsename="data" offset="start" hasmore="'more_items_in_collection">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true" type="dim">id</field>
+					<field displayname="Title" metaname="Name" datatype="String" default="true" type="dim">title</field>
+					<field displayname="Created Date" metaname="Created Date"  datatype="Date" default="true" type="dim">add_time</field>
+					<field displayname="Last Updated Date" metaname="Last Updated Date" datatype="Date" default="true" type="dim">update_time</field>
+					<field displayname="Owner Id" metaname="Owner Id" datatype="Long" default="true" type="dim" object="true" fields="value,name">user_id</field>
+					<field displayname="Owner" metaname="Owner" datatype="String" default="true" type="dim" skip="true">user_id</field>
+					<field displayname="Stage Id" metaname="Stage Id" datatype="Long" default="true" type="dim">stage_id</field>
+					<field displayname="Value" metaname="Value" datatype="Currency" default="true" type="met">value</field>
+					<field displayname="Status" metaname="Status" datatype="String" default="true">status</field>
+					<field displayname="Exp. Closing Date" metaname="Exp. Closing Date" datatype="Date" default="true" type="dim">expected_close_date</field>
+					<field displayname="Closed Date" metaname="Closed Date" datatype="Date" default="true" type="dim">close_time</field>
+					<field displayname="Person Id" metaname="Contact Id" datatype="Long" default="true" type="dim" object="true" fields="value,name">person_id</field>
+					<field displayname="Person Name" metaname="Contacts Name" datatype="String" default="true" type="dim" skip="true">person_id</field>
+					<field displayname="Org Id" metaname="Org Id" datatype="Long" default="true" type="dim" object="true" fields="value,name">org_id</field>
+					<field displayname="Org Name" metaname="Org Name" datatype="String" default="true" type="dim" skip="true">org_id</field>
+				</fields>
+			</module>
+			
+			<module id="Stages" displayname="Stages" url="https://COMPANY.pipedrive.com/v1/stages/?limit=500" responsename="data" offset="start" hasmore="'more_items_in_collection">
+				<fields>
+					<field displayname="Id" metaname="Id" datatype="Long" default="true">id</field>
+					<field displayname="Name" metaname="Name" datatype="String" default="true">name</field>
+					<field displayname="Pipeline Id" metaname="Pipeline Id" datatype="Long" default="true">pipeline_id</field>
+				</fields>
+			</module>
+		</modules>
+	</pipedrive>
+	
+	
+</connectors>
